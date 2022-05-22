@@ -1,0 +1,4 @@
+* DONE Setup  makefile
+CLOSED: [2022-05-21 Sat 15:30]
+* TODO Setup PKGBUILD
+* TODO brainstorm directory functions.
