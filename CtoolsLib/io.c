@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
-#include "core.h"
 #include <string.h>
+#include <unistd.h>
+#include "core.h"
 
 char *io_file_to_string(const char *path) {
   FILE *file;
@@ -28,11 +29,49 @@ char *io_file_to_string(const char *path) {
   
 }
 
+int dir_has_git(const struct dirent *entry) {
+  if (strlen(entry->d_name) == 4 && memcmp(entry->d_name,".git", sizeof(char) * 4) == 0)
+    return 1;
+  else
+    return 0;
+}
+
+char *io_find_git_dir(const char *base_dir) {
+  char *cur_dir;
+  int dir_result;
+  struct dirent **entry;
+
+  cur_dir = getcwd(NULL, 0);
+  dir_result = scandir(cur_dir, &entry, dir_has_git, NULL);
+  
+  if (dir_result == -1) {
+    // We've encounterd an error reading the directory
+    fprintf(stderr, "Could not read directory!\n");
+    free(cur_dir);
+    exit(74);
+  } else if (dir_result == 0) {
+
+    if (cur_dir[1] == '\0') {
+      free(cur_dir);
+      return NULL;
+    }
+    free(cur_dir);
+    chdir("..");
+    cur_dir = io_find_git_dir(base_dir);
+  } else {
+    while(dir_result--) {
+      
+    }
+  }
+  chdir(base_dir);
+  return cur_dir;
+}
+
 #define TRUE 0
 #define FALSE 1
 int io_direntry_is_hidden(const struct dirent *entry) {
   if (entry->d_name[0] == '.' ) return TRUE;
-    else return FALSE;
+  else return FALSE;
 }
 
 int io_direntry_is_parent_or_self(const struct dirent *entry) {
@@ -48,3 +87,5 @@ int io_direntry_is_parent_or_self(const struct dirent *entry) {
 }
 #undef TRUE
 #undef FASLE
+
+

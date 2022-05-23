@@ -1,23 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctools/core.h>
+#include <unistd.h>
 #include <dirent.h>
-#include <string.h>
-#include <mylib.h>
 
-#define MAX_DIRECTORY_NAME_SIZE 2048	/* Maximum directory name size */
+#define MAX_DIRECTORY_NAME_SIZE 256	
+#define MAX_DIR_CONTENTS_SIZE 256
 
 int main() {
-  int dir_result;
-  DIR *cur_dir;
-  struct dirent **names;
-  char initial_directory[MAX_DIRECTORY_NAME_SIZE];
-  
-  dir_result = scandir("./", &names, io_direntry_is_parent_or_self, alphasort);
-  int i = 0;
-  while(dir_result--) {
-    printf("%s\n", names[i]->d_name);
-    free(names[i++]);
+  char *git_dir, entries[MAX_DIRECTORY_NAME_SIZE];
+  int i;
+
+  getcwd(entries, MAX_DIRECTORY_NAME_SIZE);
+  git_dir = io_find_git_dir(entries);
+
+  if (git_dir == NULL) {
+    fprintf(stderr, "No git dir found.\n");
+    exit(1);
   }
-  free(names);
+
+  chdir(git_dir);
+  
+  free(git_dir);
+
   exit(0);
 }
