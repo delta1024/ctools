@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <dirent.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "core.h"
+
+#define MAX_DIRECTORY_NAME_SIZE 256
 
 char *io_file_to_string(const char *path) {
   FILE *file;
@@ -88,4 +92,63 @@ int io_direntry_is_parent_or_self(const struct dirent *entry) {
 #undef TRUE
 #undef FASLE
 
+int io_filter_dirs(const char *path, struct dirent ***dest, bool filter_hidden) {
+  struct dirent *ip, *ep, *curp;
+  DIR *dirp;
+  int count, cap;
+  struct stat stats;
+  char comp_buffer[(MAX_DIRECTORY_NAME_SIZE * 2) + 1];
 
+  count = 0;
+  cap = 0 ;
+  *dest = (struct dirent**)malloc(sizeof(struct dirent*) * cap);  
+  dirp = opendir(path);
+  while((curp = readdir(dirp)) != NULL) {
+    if (cap < count) {
+      cap = (cap < 8) ? 8 : cap * 2;
+      *dest = (struct dirent**)realloc(*dest, sizeof(struct dirent*) * cap);
+    }
+
+    strcpy(comp_buffer, path);
+    strcat(comp_buffer, "/");
+    strcat(comp_buffer, curp->d_name);
+    stat(comp_buffer, &stats);
+
+    if (S_ISDIR(stats.st_mode)) {
+      if (filter_hidden && curp->d_name[0] == '.') continue;
+      struct dirent *address = (struct dirent*)malloc(sizeof(struct dirent));
+      address->d_off = curp->d_off;
+      address->d_reclen = curp->d_reclen;
+      address->d_type = curp->d_type;
+      strcpy(address->d_name, curp->d_name);
+
+      (*dest)[count++] = address;    
+    }
+  
+
+  }
+
+  closedir(dirp);
+ 
+  if (count == 0) {
+    free(*dest);
+    return -1;
+  }
+  else 
+    return count;
+}
+
+char *io_canonicalize_file(const char *path, const struct dirent *entry) {
+  int path_len, entry_len, total_len;
+  char *cannonical_path;
+  path_len = strlen(path);
+  entry_len = strlen(entry->d_name);
+  total_len = path_len + entry_len + 2;
+  cannonical_path = (char*)malloc(sizeof(char) * total_len);
+  strcpy(cannonical_path, path);
+  strcat(cannonical_path, "/");
+  strcat(cannonical_path, entry->d_name);
+  return cannonical_path;
+}
+
+#undef MAX_DIRECTORY_NAME_SIZE

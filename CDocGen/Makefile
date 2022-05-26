@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -lctools
+CFLAGS = -g -lctools
 
 cdg: main.c
 	$(CC) $^ $(CFLAGS) -o $@

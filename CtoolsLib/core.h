@@ -1,6 +1,7 @@
 #ifndef  CTOOLS_CORE_LIB_H
 #define  CTOOLS_CORE_LIB_H
 #include <stdlib.h>
+#include <stdbool.h>
 #include <dirent.h>
 
 //-------------------MEMORY---------------------------//
@@ -31,8 +32,18 @@ char *io_find_git_dir(const char *cur_dir);
 /* Returns 0 if the directory entry begins with '.'.  */
 int io_direntry_is_hidden(const struct dirent *entry);
 
-/* Returns - if the directory entry name is equal to '.' or '..'. */
+/* Returns 0 if the directory entry name is equal to '.' or '..'. */
 int io_direntry_is_parent_or_self(const struct dirent *entry);
 
+/* Collects entires in path into dest; malloc is used to allocate each dirent.
+   If filter_hidden is ture omits hidden directories.
+
+   Returns -1 if no directories are found.*/
+int io_filter_dirs(const char *path, struct dirent ***dest, bool filter_hidden);
+
+/* Returns the absolute path of entry reletive to path.
+
+   Resulting string must be freed as it is allocated with malloc.*/
+char *io_canonicalize_file(const char *path, const struct dirent *entry);
 
 #endif
